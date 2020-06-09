@@ -1,0 +1,41 @@
+version: '3'
+services:
+  postgres:
+    build:
+      context: .
+      dockerfile: postgres.Dockerfile
+    expose: 
+      - "5432"
+
+  grpc:
+    build:
+      context: .
+      dockerfile: grpc.Dockerfile
+    expose: 
+      - "50050"
+      - "50051"
+      - "50052"
+      - "50047"
+    volumes:
+      - ./adempiere-gRPC-Server/build/install/adempiere-gRPC-Server/:/usr/src/grpcApp
+
+  envoy:
+    build:
+      context: .
+      dockerfile: envoy.Dockerfile
+    ports:
+      - "8989:8989"
+    depends_on:
+      - postgres
+      - grpc
+  
+  frontend:
+    image: halverneus/static-file-server
+    volumes:
+      - ./frontend:/web
+    environment:
+      - CORS=false
+      - PORT=8080
+      - folder=/web
+    ports:
+      - "8091:8080"
